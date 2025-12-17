@@ -50,9 +50,9 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 # --------------------- USUARIOS ---------------------
-OWNER_ID = 99883661056914236  # Owner con acceso total
+OWNER_ID = 998836610516914236  # Owner con acceso total
 
-CANAL_ID = 1449082898279043103  # ID del canal de bienvenida
+CANAL_ID = 144908289827904103  # ID del canal de bienvenida
 BANNER_URL = "https://i.ibb.co/7JZnM4Hd/Gemini-Generated-Image-bosylebosylebosy.png"
 BANNER_URL_OXCY_V2 = "https://i.ibb.co/kVyf2hFr/Screenshot-2025-12-12-122542.png"
 BANNER_URL_ICON_V2 = "https://i.ibb.co/GQFJ0hrr/Fho-W-qg-BS96-Z4j1-Wuar-OQA.webp"
