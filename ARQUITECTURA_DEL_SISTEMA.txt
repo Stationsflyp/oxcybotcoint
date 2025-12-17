@@ -1,0 +1,389 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                   🏗️  ARQUITECTURA DEL SISTEMA                            ║
+║                     Ban Trust Score v1.0                                  ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+📊 DIAGRAMA DE FLUJO GENERAL
+═════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         DISCORD SERVER                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │              Discord Events                                       │  │
+│  │  ┌──────────────────────────────────────────────────────────┐    │  │
+│  │  │ 1. USER BANNED                                           │    │  │
+│  │  │    └─→ on_member_ban()                                   │    │  │
+│  │  │                                                          │    │  │
+│  │  │ 2. NEW MEMBER JOINS                                      │    │  │
+│  │  │    └─→ on_member_join()                                  │    │  │
+│  │  └──────────────────────────────────────────────────────────┘    │  │
+│  └─────────────────────────┬──────────────────────────────────────────┘  │
+│                            │                                              │
+└────────────────────────────┼──────────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      BOT PRINCIPAL                                       │
+│          (OxcyShop - Store Management.py)                               │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  @bot.event                                                              │
+│  async def on_ready():                                                   │
+│    - Carga modules.identity_ban.events                                   │
+│    - Carga modules.identity_ban.commands                                 │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+         │                                    │
+         │                                    │
+         ▼                                    ▼
+    ┌─────────────┐                    ┌──────────────┐
+    │   EVENTS    │                    │   COMMANDS   │
+    │ (events.py) │                    │ (commands.py)│
+    └─────────────┘                    └──────────────┘
+         │                                    │
+         │                                    │
+    ┌────┴──────────┐                   ┌────┴────────────────┐
+    │               │                   │                     │
+    ▼               ▼                   ▼                     ▼
+  BAN         MEMBER JOIN      CHECK_TRUST          VIEW_BANS/SEARCH
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔄 FLUJO 1: CUANDO ALGUIEN ES BANEADO (on_member_ban)
+═════════════════════════════════════════════════════════════════════════════
+
+        User Banned          on_member_ban()          IdentityManager
+           │                      │                          │
+           ├─────────────────────→│                          │
+           │                      │  save_ban()              │
+           │                      ├─────────────────────────→│
+           │                      │                          │
+           │                      │      ┌──────────────────┤
+           │                      │      │ Guarda en        │
+           │                      │      │ identity_data.txt│
+           │                      │      └──────────────────┤
+           │                      │                          │
+           │                      │          Embed Enviado   │
+           │                      ├─────────────────────────→│
+           │                      │       (DATA_CHANNEL)     │
+           │                      │                          │
+           │    ✅ Completado     │                          │
+           │←─────────────────────┤                          │
+           │                      │                          │
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔄 FLUJO 2: CUANDO ALGUIEN SE UNE (on_member_join)
+═════════════════════════════════════════════════════════════════════════════
+
+      New User              on_member_join()         TrustScoreCalculator
+        │                        │                            │
+        ├───────────────────────→│                            │
+        │                        │ calculate_trust_score()    │
+        │                        ├───────────────────────────→│
+        │                        │                            │
+        │                        │         Read identity_data.txt
+        │                        │              │
+        │                        │    ┌─────────▼────────┐
+        │                        │    │ Compare with:    │
+        │                        │    │ - Account age    │
+        │                        │    │ - Name           │
+        │                        │    │ - Avatar         │
+        │                        │    │ - Server history │
+        │                        │    │ - ID pattern     │
+        │                        │    └──────────────────┘
+        │                        │              │
+        │                        │    ┌─────────▼──────────────┐
+        │                        │    │ Calculate Score 0-100  │
+        │                        │←───┤ Return analysis data   │
+        │                        │    └────────────────────────┘
+        │                        │
+        │        ┌──────────────────────────┐
+        │        │ IF Score < 70            │
+        │        │ SEND ALERT EMBED         │
+        │        │ (ALERT_CHANNEL)          │
+        │        └──────────────────────────┘
+        │                        │
+        │    ✅ Completado       │
+        │←───────────────────────┤
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🏗️  ARQUITECTURA DE MÓDULOS
+═════════════════════════════════════════════════════════════════════════════
+
+┌────────────────────────────────────────────────────────────────────┐
+│                        modules/identity_ban/                        │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐  │
+│  │  identity_manager.py                                        │  │
+│  │  ═════════════════════════════════════════════════════════ │  │
+│  │                                                             │  │
+│  │  • IdentityManager (class)                                 │  │
+│  │    ├─ ensure_file_exists()                                 │  │
+│  │    ├─ parse_ban_entry()                                    │  │
+│  │    ├─ read_all_bans()      → Lee identity_data.txt        │  │
+│  │    ├─ get_ban_by_id()       → Busca por ID               │  │
+│  │    ├─ save_ban()            → Guarda nuevo baneo          │  │
+│  │    ├─ get_user_history()    → Obtiene historial           │  │
+│  │    └─ delete_ban()          → Elimina baneo               │  │
+│  │                                                             │  │
+│  │  Interactúa con: identity_data.txt                         │  │
+│  └─────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐  │
+│  │  trust_score.py                                             │  │
+│  │  ═════════════════════════════════════════════════════════ │  │
+│  │                                                             │  │
+│  │  • TrustScoreCalculator (class)                            │  │
+│  │    ├─ calculate_account_age_score()      (0-25 pts)       │  │
+│  │    ├─ calculate_name_similarity()        (0-20 pts)       │  │
+│  │    ├─ calculate_avatar_similarity()      (0-15 pts)       │  │
+│  │    ├─ calculate_server_overlap_score()   (0-15 pts)       │  │
+│  │    ├─ calculate_id_pattern_score()       (0-10 pts)       │  │
+│  │    ├─ similarity_ratio()                 (helper)         │  │
+│  │    └─ calculate_trust_score()            (MAIN METHOD)    │  │
+│  │                                                             │  │
+│  │  Retorna: {score, is_suspicious, reasons, ...}            │  │
+│  │  Interactúa con: IdentityManager                          │  │
+│  └─────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐  │
+│  │  events.py                                                  │  │
+│  │  ═════════════════════════════════════════════════════════ │  │
+│  │                                                             │  │
+│  │  • IdentityBanEvents (Cog)                                 │  │
+│  │    ├─ on_member_ban()                                      │  │
+│  │    │  ├─ Registra baneo en identity_data.txt              │  │
+│  │    │  └─ Envía embed a DATA_CHANNEL                        │  │
+│  │    │                                                        │  │
+│  │    └─ on_member_join()                                     │  │
+│  │       ├─ Calcula Trust Score                               │  │
+│  │       ├─ Si score < 70                                     │  │
+│  │       └─ Envía alerta a ALERT_CHANNEL                      │  │
+│  │                                                             │  │
+│  │  Interactúa con: IdentityManager, TrustScoreCalculator    │  │
+│  └─────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐  │
+│  │  commands.py                                                │  │
+│  │  ═════════════════════════════════════════════════════════ │  │
+│  │                                                             │  │
+│  │  • IdentityBanCommands (Cog)                               │  │
+│  │    ├─ /check_trust @usuario                                │  │
+│  │    ├─ /view_bans  (pageable)                               │  │
+│  │    └─ /search_user <ID>                                    │  │
+│  │                                                             │  │
+│  │  • PaginationView (discord.ui.View)                        │  │
+│  │    ├─ Botones: Anterior/Siguiente                          │  │
+│  │    └─ Navega a través de banes                             │  │
+│  │                                                             │  │
+│  │  Interactúa con: IdentityManager, TrustScoreCalculator    │  │
+│  └─────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐  │
+│  │  __init__.py                                                │  │
+│  │  ═════════════════════════════════════════════════════════ │  │
+│  │  (Archivo vacío pero necesario para Python module)         │  │
+│  └─────────────────────────────────────────────────────────────┘  │
+│                                                                     │
+└────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+💾 FORMATO DE DATOS - identity_data.txt
+═════════════════════════════════════════════════════════════════════════════
+
+[BAN]
+ID: <user_id>
+User: <username>#<discriminator>
+Fecha: <YYYY-MM-DD HH:MM:SS>
+Servidor: <server_id>
+Historial: <history_text>
+Notas: <notes_text>
+[/BAN]
+
+[BAN]
+ID: <user_id>
+User: <username>#<discriminator>
+...
+[/BAN]
+
+Formato:
+- Líneas separadas por \n
+- Cada campo en formato "Clave: Valor"
+- Bloques delimitados por [BAN] ... [/BAN]
+- Parser es tolerante a espacios
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔢 CÁLCULO DEL TRUST SCORE
+═════════════════════════════════════════════════════════════════════════════
+
+PUNTUACIÓN TOTAL: 100 PUNTOS
+
+┌─────────────────────────────────────────────────────────────────┐
+│ Antigüedad de Cuenta (0-25 puntos)                              │
+├─────────────────────────────────────────────────────────────────┤
+│ > 2 años       → 25 puntos (MUY CONFIABLE)                      │
+│ > 1 año        → 20 puntos (Confiable)                          │
+│ > 6 meses      → 15 puntos (Medio)                              │
+│ > 3 meses      → 10 puntos (Bajo-medio)                         │
+│ > 1 mes        → 5 puntos (Bajo)                                │
+│ < 1 mes        → 0 puntos (SOSPECHOSO)                          │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ Similitud de Nombre (0-20 puntos)                               │
+├─────────────────────────────────────────────────────────────────┤
+│ 85%+ similar   → 5-10 puntos (Nombre ALT)                       │
+│ 70-85% similar → 10-15 puntos (Sospechoso)                      │
+│ 50-70% similar → 15-20 puntos (Parcialmente similar)            │
+│ <50% similar   → 20 puntos (Nombre nuevo)                       │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ Similitud de Avatar (0-15 puntos)                               │
+├─────────────────────────────────────────────────────────────────┤
+│ Avatar idéntico  → 0 puntos (CLARAMENTE ALT)                    │
+│ Avatar diferente → 15 puntos (Probablemente nuevo)              │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ Overlap de Servidor (0-15 puntos)                               │
+├─────────────────────────────────────────────────────────────────┤
+│ Sin historial           → 15 puntos (Limpio)                    │
+│ Comparte servidor       → 5 puntos (Antecedentes)               │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ Patrón de ID (0-10 puntos)                                      │
+├─────────────────────────────────────────────────────────────────┤
+│ ID único             → 10 puntos (Normal)                       │
+│ Diferencia <1000     → 5 puntos (Posible ALT)                   │
+│ Diferencia <100      → 0 puntos (CLARAMENTE ALT)                │
+└─────────────────────────────────────────────────────────────────┘
+
+INTERPRETACIÓN:
+85-100: 🟢 ✅ Sin sospechas
+70-84:  🟡 🟡 Monitorear
+50-69:  🟠 🟠 Kick recomendado
+0-49:   🔴 🔴 Ban recomendado
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔗 DEPENDENCIAS Y LIBRERÍAS
+═════════════════════════════════════════════════════════════════════════════
+
+Required:
+├─ discord.py (v2.0+)
+├─ discord.ext.commands
+├─ discord.app_commands
+└─ Standard library (os, datetime, difflib, json)
+
+No uses:
+❌ Base de datos (SQLite, MongoDB, etc.)
+❌ APIs externas
+❌ Librerías de terceros (aparte de discord.py)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔌 PUNTOS DE INTEGRACIÓN
+═════════════════════════════════════════════════════════════════════════════
+
+Integración Mínima:
+1. Copiar carpeta modules/identity_ban/
+2. Agregar 10 líneas en on_ready()
+3. Cambiar 2 IDs en events.py
+4. Listo
+
+Sin Modificación de Código Existente:
+- El bot sigue siendo el mismo
+- Solo se agregan nuevos módulos
+- Se puede desactivar simplemente
+
+Escalabilidad:
+- Funciona con múltiples servidores
+- Archivo centralizado compartido
+- Sin límite de registros
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📊 FLUJO DE DATOS RESUMIDO
+═════════════════════════════════════════════════════════════════════════════
+
+        Discord Events
+              │
+              ├──→ on_member_ban ──→ IdentityManager.save_ban()
+              │                            │
+              │                            ├──→ Append to identity_data.txt
+              │                            └──→ Send embed to DATA_CHANNEL
+              │
+              └──→ on_member_join ──→ IdentityManager.read_all_bans()
+                                            │
+                                            ├──→ TrustScoreCalculator
+                                            │
+                                            └──→ Compare user data
+                                                  │
+                                                  └─→ IF score < 70
+                                                       └──→ Send alert
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ VENTAJAS DE ESTA ARQUITECTURA
+═════════════════════════════════════════════════════════════════════════════
+
+✓ Modular: Cada componente es independiente
+✓ Mantenible: Código limpio y documentado
+✓ Escalable: Funciona con múltiples servidores
+✓ Simple: Sin dependencias externas pesadas
+✓ Persistente: Datos guardados en archivo
+✓ Flexible: Thresholds ajustables
+✓ Seguro: Sin exposición de datos sensibles
+✓ Rápido: Sin consultas a base de datos
+✓ Respaldable: Fácil backup de datos
+✓ Compatible: Funciona con código existente
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔒 SEGURIDAD Y PRIVACIDAD
+═════════════════════════════════════════════════════════════════════════════
+
+Datos Guardados:
+✓ ID de usuario
+✓ Nombre y discriminador
+✓ Fecha del baneo
+✓ ID del servidor
+✓ Razón y historial
+✓ Notas
+
+Datos NO Guardados:
+❌ Contraseñas
+❌ Tokens
+❌ Mensajes privados
+❌ Información de pago
+❌ Datos personales
+
+Ubicación:
+- identity_data.txt (archivo local)
+- Sin transmisión a terceros
+- Control total del usuario
+
+
+═══════════════════════════════════════════════════════════════════════════════

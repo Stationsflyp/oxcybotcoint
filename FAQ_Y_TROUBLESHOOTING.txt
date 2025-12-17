@@ -1,0 +1,390 @@
+═══════════════════════════════════════════════════════════════════════════════
+❓ PREGUNTAS FRECUENTES Y SOLUCIÓN DE PROBLEMAS
+═══════════════════════════════════════════════════════════════════════════════
+
+
+🆘 PROBLEMAS COMUNES
+═════════════════════════════════════════════════════════════════════════════
+
+
+PROBLEMA 1: El bot no inicia / Error al cargar módulos
+───────────────────────────────────────────────────────
+
+❌ Error:
+    ModuleNotFoundError: No module named 'modules.identity_ban'
+
+✅ Solución:
+    1. Verifica que la carpeta existe:
+       C:\Users\delea\Desktop\OxcyShop_Store\modules\identity_ban\
+    
+    2. Asegúrate de que __init__.py existe en:
+       - modules/__init__.py
+       - modules/identity_ban/__init__.py
+    
+    3. Si falta, crea un archivo vacío llamado __init__.py en cada carpeta
+    
+    4. Reinicia el bot
+
+
+PROBLEMA 2: Los comandos no aparecen en Discord
+────────────────────────────────────────────────
+
+❌ El bot está corriendo pero /check_trust no aparece
+
+✅ Solución:
+    1. Asegúrate de que el módulo se cargó:
+       Busca en la consola: "✅ Módulo de comandos Identity Ban cargado"
+    
+    2. Si dice error:
+       - Verifica que identity_commands.py tiene la clase IdentityBanCommands
+       - Verifica que setup() existe al final del archivo
+    
+    3. Sincroniza comandos slash:
+       En Discord:
+       a) Escribe "/" en un canal
+       b) Espera a que se actualice la lista
+       c) Presiona Ctrl+R para limpiar caché si es necesario
+    
+    4. Si aún no aparecen:
+       - Toma un screenshot del error y revisa la consola del bot
+
+
+PROBLEMA 3: Las alertas no se envían al canal
+──────────────────────────────────────────────
+
+❌ Un usuario sospechoso se une pero no hay alerta
+
+✅ Solución:
+    1. Verifica que los IDs de canal son correctos:
+       En: modules/identity_ban/events.py
+       
+       ALERT_CHANNEL_ID = 1448647845921161267      ← Es tu canal?
+       DATA_CHANNEL_ID = 1448647859363905619       ← Es tu canal?
+    
+    2. Verifica permisos del bot:
+       - El bot puede ver el canal?
+       - El bot puede enviar mensajes?
+       - El bot puede insertar embeds?
+    
+    3. Busca errores en la consola:
+       Debería decir: "Error sending alert: ..."
+    
+    4. Crea un usuario de prueba (alt) y únete con ese alt para testear
+
+
+PROBLEMA 4: No se guardan los banes
+────────────────────────────────────
+
+❌ Un usuario es baneado pero no aparece en identity_data.txt
+
+✅ Solución:
+    1. Verifica que el archivo existe:
+       C:\Users\delea\Desktop\OxcyShop_Store\identity_data.txt
+    
+    2. Si no existe, créalo manualmente:
+       - Crea un archivo .txt vacío
+       - Llámalo "identity_data.txt"
+       - Ponlo en la carpeta raíz del bot
+    
+    3. Verifica que el bot tiene permisos para:
+       - Leer archivos
+       - Escribir archivos
+    
+    4. Ban al usuario manualmente y verifica si se registra
+    
+    5. Si aún no funciona, revisa permisos del bot:
+       Settings > Roles > OxcyShop (tu rol del bot)
+       Debe tener: "Administrador" o "Ban/Kick Members"
+
+
+PROBLEMA 5: Error al parsear el archivo de banes
+─────────────────────────────────────────────────
+
+❌ trust_score.py no lee los banes correctamente
+
+✅ Solución:
+    1. NO edites el archivo manualmente
+    
+    2. Si lo editaste accidentalmente:
+       - Borra identity_data.txt
+       - Reinicia el bot
+       - Se recreará vacío automáticamente
+    
+    3. Verifica el formato del archivo:
+       [BAN]
+       ID: 123456789
+       User: nombre#0000
+       Fecha: 2025-12-11 10:30:45
+       Servidor: 123456789
+       Historial: texto
+       Notas: texto
+       [/BAN]
+    
+    4. IMPORTANTE: Sin espacios extra, sin caracteres especiales extraños
+
+
+PROBLEMA 6: El Trust Score siempre es 100 (sin detecciones)
+──────────────────────────────────────────────────────────
+
+❌ El sistema no detecta ningún alt
+
+✅ Verificar:
+    1. ¿Hay banes registrados en identity_data.txt?
+    2. Prueba con /view_bans
+    3. Prueba con /check_trust @alguien
+    4. Si siempre dice sin sospechas:
+       - El archivo está vacío o corrupto
+       - Necesitas banear a alguien primero
+       - Luego intenta unirte con un alt
+
+
+───────────────────────────────────────────────────────────────────────────────
+
+
+❓ PREGUNTAS FRECUENTES
+═════════════════════════════════════════════════════════════════════════════
+
+
+P1: ¿Dónde se guardan los datos?
+═════════════════════════════════
+R: En: C:\Users\delea\Desktop\OxcyShop_Store\identity_data.txt
+   Es un archivo de texto plano, puedes verlo con cualquier editor.
+   NO uses Notepad++ o editores que cambien la codificación.
+
+
+P2: ¿Puedo editar identity_data.txt manualmente?
+══════════════════════════════════════════════════
+R: NO. Si lo editas:
+   - Podrías corromper el formato
+   - El bot podría no leer los datos correctamente
+   - Usa los comandos del bot en su lugar
+   
+   Si necesitas borrar un registro:
+   - Espera a que agreguemos comando /delete_ban
+   - O borra manualmente siguiendo el formato exacto
+
+
+P3: ¿Qué pasa si el bot se reinicia?
+════════════════════════════════════
+R: Los datos se mantienen porque están en identity_data.txt
+   Todo es persistente. No se pierde nada.
+
+
+P4: ¿Cuántos banes puedo guardar?
+═════════════════════════════════
+R: Virtualmente ilimitados. El archivo de texto puede contener
+   miles de registros sin problemas de rendimiento.
+
+
+P5: ¿El sistema funciona entre servidores?
+═════════════════════════════════════════════
+R: SÍ. El archivo centralizado registra banes de todos tus servidores.
+   Si usas el bot en múltiples servidores, detectará alts automáticamente.
+
+
+P6: ¿Cómo cambio los canales de alertas?
+═════════════════════════════════════════
+R: Abre: modules/identity_ban/events.py
+   Busca estas líneas:
+   
+   ALERT_CHANNEL_ID = 1448647845921161267
+   DATA_CHANNEL_ID = 1448647859363905619
+   
+   Cambia los números por tus IDs de canal.
+   
+   Cómo obtener IDs:
+   - En Discord, activa "Modo Desarrollador"
+   - Click derecho en el canal > Copiar ID
+
+
+P7: ¿Puedo cambiar los thresholds del Trust Score?
+═════════════════════════════════════════════════════
+R: SÍ. En: modules/identity_ban/trust_score.py
+   
+   Ejemplo: Para hacer más sensible la detección de nombres:
+   
+   Línea ~85:
+       if similarity > 0.85:  # Cambiar a 0.70 para más sensibilidad
+   
+   Línea ~90:
+       if similarity > 0.70:  # Cambiar a 0.50 para más sensibilidad
+
+
+P8: ¿El sistema detecta bots falsos?
+════════════════════════════════════
+R: Parcialmente. Lo detecta si:
+   - Tiene antigüedad de cuenta muy baja
+   - Tiene avatar/nombre similares a baneados
+   - Hay actividad sospechosa previa
+   
+   Para máxima efectividad, complétalos con análisis manual.
+
+
+P9: ¿Qué información se guarda exactamente?
+════════════════════════════════════════════
+R: Por cada baneo:
+   ✅ ID de usuario
+   ✅ Nombre#Discriminator
+   ✅ Fecha y hora del baneo
+   ✅ ID del servidor
+   ✅ Razón del baneo (si existe)
+   ✅ Historial textual
+   ✅ Notas personalizadas
+   
+   ❌ NO se guardan:
+   - Contraseñas
+   - Tokens
+   - Datos personales sensitivos
+   - Mensajes privados
+
+
+P10: ¿Cómo respaldo los datos?
+═══════════════════════════════
+R: Es muy simple:
+   1. Copia el archivo identity_data.txt
+   2. Pégalo en una carpeta segura
+   3. O subirlo a Google Drive/OneDrive
+   4. Si necesitas restaurar, solo reemplaza el archivo
+
+
+P11: ¿El sistema consume muchos recursos?
+══════════════════════════════════════════
+R: NO. Porque:
+   - Usa un archivo de texto (no base de datos)
+   - Solo procesa cuando alguien se une o es baneado
+   - Las búsquedas son O(n) pero n es pequeño en la mayoría de casos
+   - Sin conexiones de red externas
+
+
+P12: ¿Funciona con Discord.py v2?
+═════════════════════════════════
+R: SÍ. El código está escrito para Discord.py v2.
+   
+   Si usas v1, necesitarás cambios menores:
+   - await bot.add_cog() → bot.add_cog()
+   - await bot.load_extension() → bot.load_extension()
+
+
+───────────────────────────────────────────────────────────────────────────────
+
+
+🔧 PERSONALIZACIÓN AVANZADA
+═════════════════════════════════════════════════════════════════════════════
+
+
+CAMBIAR EL FORMATO DEL ARCHIVO
+═══════════════════════════════
+
+Archivo: modules/identity_ban/identity_manager.py
+
+La función parse_ban_entry() lee líneas con formato "clave: valor"
+
+Si quieres agregar más campos, por ejemplo "Alertas Previas":
+
+1. En save_ban(), agrega:
+   ```
+   Alertas_Previas: {alertas}
+   ```
+
+2. En parse_ban_entry(), automáticamente lo parseará
+
+
+CAMBIAR EL CÁLCULO DEL TRUST SCORE
+═══════════════════════════════════
+
+Archivo: modules/identity_ban/trust_score.py
+
+Cada método calcula una parte:
+- calculate_account_age_score() → Antigüedad
+- calculate_name_similarity() → Nombre
+- calculate_avatar_similarity() → Avatar
+- etc.
+
+Para ajustar un cálculo, modifica la función correspondiente.
+
+Ejemplo: Hacer avatar más importante
+
+1. Cambia calculate_avatar_similarity() max de 15 a 25
+2. Cambia total_score para sumar 25 en lugar de 15
+
+
+AGREGAR NUEVOS COMANDOS
+════════════════════════
+
+En: modules/identity_ban/commands.py
+
+Copia la estructura de check_trust y crea uno nuevo:
+
+```python
+@app_commands.command(name="mi_comando")
+async def mi_comando(self, interaction: discord.Interaction):
+    await interaction.response.defer()
+    # Tu código aquí
+    await interaction.followup.send("Mensaje")
+```
+
+
+───────────────────────────────────────────────────────────────────────────────
+
+
+🎓 GUÍA DE IMPLEMENTACIÓN PASO A PASO
+═════════════════════════════════════════════════════════════════════════════
+
+PASO 1: Descargar/Crear archivos
+════════════════════════════════
+✅ Archivos ya están listos en tu carpeta
+
+
+PASO 2: Integrar al bot
+═══════════════════════
+✅ Abre OxcyShop - Store Management.py
+✅ Ve al método on_ready()
+✅ Agrega el código del archivo CÓDIGO_AGREGAR.py
+
+
+PASO 3: Configurar canales
+══════════════════════════
+✅ En Discord, obtén IDs de dos canales
+✅ Abre modules/identity_ban/events.py
+✅ Cambia ALERT_CHANNEL_ID y DATA_CHANNEL_ID
+
+
+PASO 4: Reiniciar bot
+════════════════════
+✅ Guarda todos los cambios
+✅ Para el bot (Ctrl+C si está en terminal)
+✅ Inicia nuevamente
+
+
+PASO 5: Testear
+═══════════════
+✅ Ejecuta /check_trust @tu_nombre
+   Debería mostrar tu Trust Score
+
+✅ Intenta banear un usuario de prueba
+   Debería registrarse en identity_data.txt
+
+✅ Crea un alt y únete
+   Debería enviar alerta si score < 70
+
+
+PASO 6: Listo!
+══════════════
+✅ El sistema está activo y protegiendo tu servidor
+
+
+───────────────────────────────────────────────────────────────────────────────
+
+
+📞 OBTENER AYUDA
+═════════════════════════════════════════════════════════════════════════════
+
+Si tienes problemas:
+
+1. Revisa INTEGRACIÓN_IDENTITY_BAN.md
+2. Revisa EJEMPLOS_DE_SALIDA.txt
+3. Busca tu error en este archivo (FAQ_Y_TROUBLESHOOTING.txt)
+4. Verifica la consola del bot para mensajes de error
+5. Asegúrate de que los archivos existen y están en la carpeta correcta
+
+═══════════════════════════════════════════════════════════════════════════════

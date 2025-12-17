@@ -1,0 +1,263 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                  🚀 GUÍA DE INICIO RÁPIDO - 5 MINUTOS                     ║
+║                                                                            ║
+║  Sistema Ban Trust Score - Detecta ALTs y Ban Evaders automáticamente    ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+⏱️  TIEMPO TOTAL: 5-10 MINUTOS
+
+
+PASO 1: OBTENER IDS DE DISCORD (1 minuto)
+═════════════════════════════════════════════════════════════════════════════
+
+En Discord:
+1. Settings (esquina inferior izquierda)
+2. Advanced
+3. Activar "Developer Mode"
+4. Cerrar settings
+
+Luego:
+5. Click derecho en un canal → "Copy Channel ID"
+6. Guarda ese número (este será ALERT_CHANNEL_ID)
+
+7. Repite para otro canal → "Copy Channel ID"
+8. Guarda ese número (este será DATA_CHANNEL_ID)
+
+¡Tienes los 2 IDs listos!
+
+
+PASO 2: EDITAR ARCHIVO DE CONFIGURACIÓN (1 minuto)
+═════════════════════════════════════════════════════════════════════════════
+
+Abre el archivo:
+  C:\...\OxcyShop_Store\modules\identity_ban\events.py
+
+Busca (línea 8-9):
+  ALERT_CHANNEL_ID = 1448647845921161267
+  DATA_CHANNEL_ID = 1448647859363905619
+
+Reemplaza con tus IDs:
+  ALERT_CHANNEL_ID = [NÚMERO_DEL_PASO_6]
+  DATA_CHANNEL_ID = [NÚMERO_DEL_PASO_8]
+
+Guarda (Ctrl+S)
+
+
+PASO 3: COPIAR CÓDIGO AL BOT (1 minuto)
+═════════════════════════════════════════════════════════════════════════════
+
+Abre:
+  C:\...\OxcyShop_Store\OxcyShop - Store Management.py
+
+Busca:
+  @bot.event
+  async def on_ready():
+      print(f"Bot connected as {bot.user}")
+      bot.loop.create_task(change_status())
+
+DESPUÉS de la línea: bot.loop.create_task(change_status())
+
+Agrega ESTE CÓDIGO (copiar exactamente):
+
+───────────────────────────────────────────────────────────────────────────
+
+    # --- CARGAR MÓDULOS DE IDENTITY BAN ---
+    try:
+        await bot.load_extension("modules.identity_ban.events")
+        print("✅ Módulo de eventos Identity Ban cargado")
+    except Exception as e:
+        print(f"❌ Error cargando módulo events: {e}")
+    
+    try:
+        await bot.load_extension("modules.identity_ban.commands")
+        print("✅ Módulo de comandos Identity Ban cargado")
+    except Exception as e:
+        print(f"❌ Error cargando módulo commands: {e}")
+
+───────────────────────────────────────────────────────────────────────────
+
+Guarda (Ctrl+S)
+
+
+PASO 4: REINICIAR BOT (1 minuto)
+═════════════════════════════════════════════════════════════════════════════
+
+En tu terminal/consola:
+1. Presiona Ctrl+C para detener el bot
+2. Espera a que se apague completamente
+3. Ejecuta el bot nuevamente
+
+Deberías ver en la consola:
+  ✅ Módulo de eventos Identity Ban cargado
+  ✅ Módulo de comandos Identity Ban cargado
+
+Si ves eso → ✅ INTEGRACIÓN EXITOSA
+
+Si ves error → Revisa FAQ_Y_TROUBLESHOOTING.txt
+
+
+PASO 5: VERIFICAR COMANDOS (1 minuto)
+═════════════════════════════════════════════════════════════════════════════
+
+En Discord:
+1. Abre cualquier canal
+2. Escribe: /
+3. Espera a que aparezcan sugerencias
+4. Busca: check_trust
+
+Si ves "check_trust" → Los comandos están activos
+
+Prueba: /check_trust @tunombre
+Debería mostrarte tu análisis
+
+
+PASO 6: ¡LISTO! (0 minutos)
+═════════════════════════════════════════════════════════════════════════════
+
+El sistema ya está activo y funcionando.
+
+Ahora:
+✓ Los banes se registran automáticamente
+✓ Los usuarios sospechosos reciben alertas
+✓ Puedes usar comandos slash para verificar usuarios
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+📋 COMANDOS DISPONIBLES
+═════════════════════════════════════════════════════════════════════════════
+
+En Discord escribe uno de estos (con /):
+
+/check_trust @usuario
+├─ Verifica el Trust Score de alguien
+├─ Retorna: Puntuación, análisis detallado
+└─ Ejemplo: /check_trust @Juan
+
+/view_bans
+├─ Muestra todos los usuarios baneados registrados
+├─ Tiene botones: Anterior/Siguiente
+└─ Ejemplo: /view_bans
+
+/search_user <ID>
+├─ Busca un usuario específico en el registro
+├─ Retorna: Información completa del usuario
+└─ Ejemplo: /search_user 123456789012345678
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+⚠️  PUNTOS IMPORTANTES
+═════════════════════════════════════════════════════════════════════════════
+
+✅ NO modificaste archivo OxcyShop (solo agregaste código)
+✅ LOS IDS DE CANAL SON CRÍTICOS (sin ellos no envía alertas)
+✅ EL BOT NECESITA PERMISOS en esos 2 canales
+✅ Los comandos pueden tardar 5-10 min en aparecer en Discord
+✅ Si no aparecen, presiona Ctrl+R en Discord para limpiar caché
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+🧪 PROBAR EL SISTEMA (OPCIONAL)
+═════════════════════════════════════════════════════════════════════════════
+
+Para verificar que todo funciona:
+
+1. Banea a un usuario de prueba
+   └─ Debería aparecer un embed en el canal DATA_CHANNEL
+
+2. Crea un alt (o usa otro usuario)
+3. Intenta que se una con ese alt
+   └─ Si es cuenta nueva, debería enviar alerta a ALERT_CHANNEL
+
+4. Usa /check_trust @alguien
+   └─ Debería mostrar el análisis
+
+Si todo funciona → ✅ SISTEMA OPERATIVO
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+❓ ¿ALGO NO FUNCIONA?
+═════════════════════════════════════════════════════════════════════════════
+
+1. Los comandos no aparecen
+   → Espera 10 minutos para sincronización
+   → Presiona Ctrl+R en Discord
+   → Reinicia el bot
+
+2. Las alertas no llegan
+   → Verifica los IDs en events.py
+   → El bot debe tener permisos en esos canales
+
+3. No se guardan banes
+   → Revisa la consola para errores
+   → Verifica permisos del bot
+
+4. Error en la consola
+   → Revisa FAQ_Y_TROUBLESHOOTING.txt
+   → Busca tu error allí
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+📚 MÁS INFORMACIÓN
+═════════════════════════════════════════════════════════════════════════════
+
+Lee estos archivos si necesitas:
+
+INTEGRACIÓN_IDENTITY_BAN.md
+└─ Explicación completa del sistema
+
+REFERENCIA_RÁPIDA.txt
+└─ Resumen de funciones y comandos
+
+FAQ_Y_TROUBLESHOOTING.txt
+└─ Solución de problemas
+
+EJEMPLOS_DE_SALIDA.txt
+└─ Cómo se ven los mensajes
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST FINAL
+═════════════════════════════════════════════════════════════════════════════
+
+☑️  Obtuve los 2 IDs de canal
+☑️  Cambié los IDs en events.py
+☑️  Agregué el código en on_ready()
+☑️  Guardé ambos archivos (Ctrl+S)
+☑️  Reinicié el bot
+☑️  Aparecen los mensajes "✅ Módulo cargado"
+☑️  Los comandos / aparecen en Discord
+☑️  /check_trust funciona
+
+¡LISTO! Tu sistema está activo. 🎉
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+🎓 PRÓXIMOS PASOS
+═════════════════════════════════════════════════════════════════════════════
+
+Ahora el sistema está detectando automáticamente:
+✓ ALTs
+✓ Ban Evaders
+✓ Usuarios sospechosos
+
+Y tienes disponible:
+✓ /check_trust para análisis manual
+✓ /view_bans para historial
+✓ /search_user para búsquedas
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+¿LISTO? Comienza a usar el sistema. 🚀
+
+═════════════════════════════════════════════════════════════════════════════

@@ -1,0 +1,358 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║            🔐 SISTEMA BAN TRUST SCORE - COMIENZA AQUÍ                     ║
+║                                                                            ║
+║  Sistema completo de protección contra ALTs y Ban Evaders                 ║
+║  Sin base de datos • Archivo de texto único • Completamente modular       ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+
+📦 ARCHIVOS ENTREGADOS
+═════════════════════════════════════════════════════════════════════════════
+
+✅ modules/identity_ban/
+   ├── __init__.py
+   ├── identity_manager.py     (Manejo de archivo .txt)
+   ├── trust_score.py          (Cálculo de puntuación)
+   ├── events.py               (Eventos automáticos)
+   └── commands.py             (Comandos slash)
+
+✅ identity_data.txt           (Base de datos en texto - se crea automáticamente)
+
+✅ Archivos de Documentación:
+   ├── INTEGRACIÓN_IDENTITY_BAN.md    (Guía completa)
+   ├── FAQ_Y_TROUBLESHOOTING.txt       (Preguntas frecuentes)
+   ├── REFERENCIA_RÁPIDA.txt           (Resumen de funciones)
+   ├── EJEMPLOS_DE_SALIDA.txt          (Ejemplos visuales)
+   └── CÓDIGO_AGREGAR.py               (Código exacto)
+
+✅ TEST_DEL_SISTEMA.py         (Script para verificar que funciona)
+
+
+🚀 PASOS PARA INTEGRAR (5 MINUTOS)
+═════════════════════════════════════════════════════════════════════════════
+
+PASO 1: Abre el archivo principal del bot
+─────────────────────────────────────────
+C:\Users\delea\Desktop\OxcyShop_Store\OxcyShop - Store Management.py
+
+
+PASO 2: Busca el método on_ready()
+──────────────────────────────────
+Debería verse algo como:
+
+    @bot.event
+    async def on_ready():
+        print(f"Bot connected as {bot.user}")
+        bot.loop.create_task(change_status())
+        
+        service_channel = bot.get_channel(SERVICE_CHANNEL_ID)
+        if service_channel:
+            # ... más código ...
+
+
+PASO 3: Agrega el código de los módulos
+────────────────────────────────────────
+Después de la línea: bot.loop.create_task(change_status())
+
+Inserta esto:
+
+    # --- CARGAR MÓDULOS DE IDENTITY BAN ---
+    try:
+        await bot.load_extension("modules.identity_ban.events")
+        print("✅ Módulo de eventos Identity Ban cargado")
+    except Exception as e:
+        print(f"❌ Error cargando módulo events: {e}")
+    
+    try:
+        await bot.load_extension("modules.identity_ban.commands")
+        print("✅ Módulo de comandos Identity Ban cargado")
+    except Exception as e:
+        print(f"❌ Error cargando módulo commands: {e}")
+
+
+PASO 4: Guarda el archivo
+─────────────────────────
+Ctrl+S
+
+
+PASO 5: Configura los canales (IMPORTANTE)
+───────────────────────────────────────────
+Abre: C:\Users\delea\Desktop\OxcyShop_Store\modules\identity_ban\events.py
+
+Busca estas líneas (8-9):
+    ALERT_CHANNEL_ID = 1448647845921161267
+    DATA_CHANNEL_ID = 1448647859363905619
+
+Reemplaza con tus IDs:
+
+Para obtener tu ID de canal:
+1. En Discord, habilita "Modo Desarrollador" (User Settings > Advanced)
+2. Click derecho en el canal > "Copiar ID del canal"
+3. Pega aquí
+
+
+PASO 6: Reinicia el bot
+──────────────────────
+1. Si está corriendo, presiona Ctrl+C
+2. Ejecuta nuevamente el bot
+3. Deberías ver:
+   ✅ Módulo de eventos Identity Ban cargado
+   ✅ Módulo de comandos Identity Ban cargado
+
+
+✅ ¡LISTO! El sistema está activo.
+
+
+📋 COMANDOS DISPONIBLES
+═════════════════════════════════════════════════════════════════════════════
+
+/check_trust @usuario
+────────────────────
+Analiza a un usuario y muestra su Trust Score
+
+Ejemplo: /check_trust @NombreUsuario
+Retorna: Puntuación, detalles de análisis, recomendación
+
+
+/view_bans
+──────────
+Lista todos los usuarios baneados registrados
+
+Ejemplo: /view_bans
+Retorna: Lista pageable de banes
+
+
+/search_user <ID>
+─────────────────
+Busca un usuario específico en los registros
+
+Ejemplo: /search_user 123456789012345678
+Retorna: Información completa del usuario
+
+
+🎯 CÓMO FUNCIONA
+═════════════════════════════════════════════════════════════════════════════
+
+1. CUANDO ALGUIEN ES BANEADO
+   └─ Bot registra automáticamente:
+      • ID del usuario
+      • Nombre y discriminador
+      • Fecha y hora
+      • ID del servidor
+      • Razón del ban
+      • Historial
+      
+   └─ Envía embed al canal de DATOS (1448647859363905619)
+   
+   └─ Guarda en identity_data.txt
+
+
+2. CUANDO ALGUIEN SE UNE AL SERVIDOR
+   └─ Bot calcula su "Trust Score" (0-100):
+      • Antigüedad de la cuenta
+      • Similitud del nombre
+      • Similitud del avatar
+      • Historial en el servidor
+      • Patrones de ID
+      
+   └─ Si score < 70: Envía alerta al canal (1448647845921161267)
+      └─ Incluye: Razones, coincidencias, recomendación (kick/ban)
+      
+   └─ Si score >= 70: Entrada normal (sin alerta)
+
+
+📊 PUNTUACIÓN DEL TRUST SCORE
+═════════════════════════════════════════════════════════════════════════════
+
+Score 85-100 🟢: ✅ Sin sospechas (entrada normal)
+Score 70-84  🟡: 🟡 Monitorear (observar con caution)
+Score 50-69  🟠: 🟠 Kick recomendado (investiga)
+Score 0-49   🔴: 🔴 Ban recomendado (probablemente alt/evader)
+
+
+🧪 TEST DEL SISTEMA (OPCIONAL)
+═════════════════════════════════════════════════════════════════════════════
+
+Antes de usar en producción, puedes verificar que todo funciona:
+
+1. Abre cmd/PowerShell en tu carpeta del bot
+2. Ejecuta: python TEST_DEL_SISTEMA.py
+3. Verifica que todos los tests pasen
+4. El script creará datos de prueba en identity_data.txt
+
+
+📚 DOCUMENTACIÓN COMPLETA
+═════════════════════════════════════════════════════════════════════════════
+
+Si tienes preguntas, busca en estos archivos:
+
+INTEGRACIÓN_IDENTITY_BAN.md
+   → Explicación completa del sistema
+   → Cómo funciona cada módulo
+   → Cambios avanzados
+
+REFERENCIA_RÁPIDA.txt
+   → Resumen ejecutivo
+   → Tabla de comandos
+   → Tips rápidos
+
+FAQ_Y_TROUBLESHOOTING.txt
+   → Problemas comunes y soluciones
+   → Preguntas frecuentes
+   → Personalización avanzada
+
+EJEMPLOS_DE_SALIDA.txt
+   → Cómo se ven los embeds
+   → Casos de uso reales
+   → Formato de datos
+
+
+⚡ DATOS RÁPIDOS
+═════════════════════════════════════════════════════════════════════════════
+
+✅ NO requiere base de datos
+✅ TODO en un archivo .txt
+✅ Completamente modular (no modifica tus archivos)
+✅ Funciona automáticamente
+✅ Sin dependencias externas
+✅ Funciona entre múltiples servidores
+✅ Fácil de respaldar
+✅ Personalizable
+
+
+🔒 SEGURIDAD
+═════════════════════════════════════════════════════════════════════════════
+
+✅ Datos guardados localmente
+✅ Control total sobre información
+✅ Sin conexiones externas
+✅ Sin tokens de terceros
+✅ Respaldable fácilmente
+
+
+❓ PREGUNTAS RÁPIDAS
+═════════════════════════════════════════════════════════════════════════════
+
+¿El bot necesita base de datos?
+→ NO. Todo es archivo .txt
+
+¿Necesito configurar algo especial?
+→ Solo los 2 IDs de canal
+
+¿Funciona con múltiples servidores?
+→ SÍ. El archivo es centralizado
+
+¿Qué pasa si lo edito manualmente?
+→ NO lo hagas. Podría corromperse.
+
+¿Es compatible con mi bot actual?
+→ SÍ. Solo se agregan nuevos módulos.
+
+¿Cómo respaldo los datos?
+→ Copia identity_data.txt
+
+¿Puedo cambiar el Trust Score?
+→ SÍ. Edita los thresholds en trust_score.py
+
+¿Los usuarios ven los alertas?
+→ NO. Solo tu staff en el canal privado.
+
+¿Qué pasa si alguien es baneado 2 veces?
+→ Ambos registros se guardan.
+
+¿Puedo búsqueda por nombre?
+→ SÍ. Con /search_user <ID>
+
+
+🎓 PRÓXIMOS PASOS
+═════════════════════════════════════════════════════════════════════════════
+
+1. ✅ Integración (ya hecha)
+   └─ Agrega las 10 líneas de código
+
+2. ✅ Configuración
+   └─ Cambia los IDs de canal
+
+3. ✅ Test
+   └─ Ejecuta TEST_DEL_SISTEMA.py (opcional)
+
+4. ✅ Uso
+   └─ Banea usuarios, intenta con alts, usa comandos
+
+5. ✅ Monitoreo
+   └─ Revisa /view_bans y /check_trust regularmente
+
+
+💾 ESTRUCTURA FINAL
+═════════════════════════════════════════════════════════════════════════════
+
+Después de integrar, tendrás:
+
+OxcyShop_Store/
+├── OxcyShop - Store Management.py ← MODIFICADO (10 líneas)
+├── oxcywebhook.py
+├── requirements.txt
+├── identity_data.txt ← NUEVO (base de datos)
+├── modules/ ← NUEVA CARPETA
+│   └── identity_ban/
+│       ├── __init__.py
+│       ├── identity_manager.py
+│       ├── trust_score.py
+│       ├── events.py
+│       └── commands.py
+├── INICIO_AQUÍ.txt ← Este archivo
+├── INTEGRACIÓN_IDENTITY_BAN.md
+├── REFERENCIA_RÁPIDA.txt
+├── FAQ_Y_TROUBLESHOOTING.txt
+├── EJEMPLOS_DE_SALIDA.txt
+├── CÓDIGO_AGREGAR.py
+└── TEST_DEL_SISTEMA.py
+
+
+🚨 IMPORTANTE
+═════════════════════════════════════════════════════════════════════════════
+
+⚠️  Solo modifica OxcyShop - Store Management.py
+    └─ Agrega exactamente 10 líneas de código
+
+⚠️  Nunca edites identity_data.txt manualmente
+    └─ Podrías corromper el formato
+
+⚠️  Configura los IDs de canal ANTES de reiniciar
+    └─ Sin esto las alertas no se envían
+
+⚠️  El bot necesita permiso de "Ver canales"
+    └─ En los 2 canales de alertas
+
+⚠️  Los comandos se escriben con "/" (slash commands)
+    └─ Esto es automático en Discord
+
+
+✅ VERIFICACIÓN FINAL
+═════════════════════════════════════════════════════════════════════════════
+
+Después de todo, verifica:
+
+1. ☑️  Bot inicia sin errores
+2. ☑️  Aparecen los mensajes "✅ Módulo cargado"
+3. ☑️  Los comandos / aparecen en Discord
+4. ☑️  /check_trust funciona
+5. ☑️  /view_bans muestra (aunque sea vacío)
+6. ☑️  identity_data.txt existe
+7. ☑️  Cuando alguien es baneado, se registra
+
+Si todo esto está ✅, ¡El sistema está listo!
+
+
+═════════════════════════════════════════════════════════════════════════════
+
+Preguntas o problemas?
+→ Revisa FAQ_Y_TROUBLESHOOTING.txt
+→ Revisa INTEGRACIÓN_IDENTITY_BAN.md
+→ Revisa EJEMPLOS_DE_SALIDA.txt
+
+¡Éxito con tu sistema Ban Trust Score! 🎉
+
+═════════════════════════════════════════════════════════════════════════════

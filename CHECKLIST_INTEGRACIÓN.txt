@@ -1,0 +1,303 @@
+═══════════════════════════════════════════════════════════════════════════════
+✅ CHECKLIST DE INTEGRACIÓN - Sistema Ban Trust Score
+═══════════════════════════════════════════════════════════════════════════════
+
+
+📋 FASE 1: VERIFICACIÓN DE ARCHIVOS
+═══════════════════════════════════════════════════════════════════════════════
+
+☐ Verificar que existen estos archivos:
+  
+  ☐ C:\...\modules\identity_ban\__init__.py
+  ☐ C:\...\modules\identity_ban\identity_manager.py
+  ☐ C:\...\modules\identity_ban\trust_score.py
+  ☐ C:\...\modules\identity_ban\events.py
+  ☐ C:\...\modules\identity_ban\commands.py
+
+
+📋 FASE 2: MODIFICACIÓN DEL BOT PRINCIPAL
+═══════════════════════════════════════════════════════════════════════════════
+
+☐ Abrir: OxcyShop - Store Management.py
+
+☐ Buscar: @bot.event
+          async def on_ready():
+
+☐ Encontrar la línea: bot.loop.create_task(change_status())
+
+☐ Después de esa línea, agregar:
+
+  ☐ Código de carga de módulos (ver CÓDIGO_AGREGAR.py)
+
+☐ Verificar que el código se ve así:
+
+    @bot.event
+    async def on_ready():
+        print(f"Bot connected as {bot.user}")
+        bot.loop.create_task(change_status())
+        
+        # --- CARGAR MÓDULOS DE IDENTITY BAN ---
+        try:
+            await bot.load_extension("modules.identity_ban.events")
+            print("✅ Módulo de eventos Identity Ban cargado")
+        except Exception as e:
+            print(f"❌ Error cargando módulo events: {e}")
+        
+        try:
+            await bot.load_extension("modules.identity_ban.commands")
+            print("✅ Módulo de comandos Identity Ban cargado")
+        except Exception as e:
+            print(f"❌ Error cargando módulo commands: {e}")
+        
+        service_channel = bot.get_channel(SERVICE_CHANNEL_ID)
+        # ... resto del código
+
+☐ Guardar el archivo (Ctrl+S)
+
+☐ NO modificar nada más
+
+
+📋 FASE 3: CONFIGURACIÓN DE CANALES
+═══════════════════════════════════════════════════════════════════════════════
+
+☐ Tener listos 2 canales en Discord:
+  
+  ☐ Canal 1: Para alertas de seguridad (ALT/Ban evader)
+             (puede ser privado, solo staff)
+             
+  ☐ Canal 2: Para registro de banes
+             (puede ser privado, solo staff)
+
+☐ Obtener IDs de los canales:
+  
+  En Discord:
+  ☐ Settings > Advanced > Developer Mode = ON
+  ☐ Click derecho en Canal 1 > Copy Channel ID → Anota ID1
+  ☐ Click derecho en Canal 2 > Copy Channel ID → Anota ID2
+
+☐ Abrir: modules/identity_ban/events.py
+
+☐ Encontrar las líneas (alrededor de línea 8-9):
+  
+  ALERT_CHANNEL_ID = 1448647845921161267
+  DATA_CHANNEL_ID = 1448647859363905619
+
+☐ Reemplazar con tus IDs:
+  
+  ALERT_CHANNEL_ID = [TU_ID_CANAL_1]
+  DATA_CHANNEL_ID = [TU_ID_CANAL_2]
+
+☐ Guardar (Ctrl+S)
+
+
+📋 FASE 4: PERMISOS DEL BOT
+═══════════════════════════════════════════════════════════════════════════════
+
+En Discord, verificar que el bot tiene permiso para:
+
+☐ Ver los 2 canales de alertas
+☐ Enviar mensajes en los 2 canales
+☐ Insertar embeds
+☐ Ver historial de mensajes
+☐ Ban members (para detectar on_member_ban)
+
+
+📋 FASE 5: VERIFICACIÓN PRE-INICIO
+═══════════════════════════════════════════════════════════════════════════════
+
+☐ Verificar que NO hay errores de sintaxis en:
+  
+  ☐ OxcyShop - Store Management.py
+     (Abre con editor, verifica sin errores rojos)
+  
+  ☐ modules/identity_ban/*.py
+     (Mismo)
+
+☐ Verificar que los intents están correctos en OxcyShop:
+  
+  intents = discord.Intents.default()
+  intents.members = True          ← DEBE estar
+  intents.message_content = True  ← DEBE estar
+
+
+📋 FASE 6: PRIMER INICIO
+═══════════════════════════════════════════════════════════════════════════════
+
+☐ Iniciar el bot
+
+☐ En la consola, buscar estas líneas:
+
+  ✅ Módulo de eventos Identity Ban cargado
+  ✅ Módulo de comandos Identity Ban cargado
+
+☐ Si ves esas líneas → ✅ INTEGRACIÓN EXITOSA
+
+☐ Si ves error → 
+  ☐ Revisa el archivo, busca typos
+  ☐ Verifica paths de carpetas
+  ☐ Revisa FAQ_Y_TROUBLESHOOTING.txt
+
+
+📋 FASE 7: TEST DE COMANDOS
+═══════════════════════════════════════════════════════════════════════════════
+
+En Discord, prueba estos comandos:
+
+☐ Escribe: /
+  ☐ Espera a que aparezcan sugerencias
+  ☐ Deberías ver: check_trust, view_bans, search_user
+  
+  ☐ Si aparecen → ✅ COMANDOS FUNCIONALES
+  ☐ Si NO aparecen → 
+    └─ Espera 5-10 min (sincronización de Discord)
+    └─ Presiona Ctrl+R en Discord para limpiar caché
+    └─ Reinicia el bot
+
+☐ Prueba: /check_trust @TuNombre
+  ☐ Debería mostrar un embed con tu análisis
+  ☐ Score debería estar alto (> 85 probablemente)
+  
+  ☐ Si funciona → ✅ COMANDOS OPERATIVOS
+
+☐ Prueba: /view_bans
+  ☐ Debería mostrar lista de banes (vacío si nadie está baneado)
+  ☐ Si funciona → ✅ SISTEMA OPERATIVO
+
+
+📋 FASE 8: TEST EN VIVO
+═══════════════════════════════════════════════════════════════════════════════
+
+Prueba el sistema con un usuario real:
+
+☐ Banea a un usuario TEST:
+  ☐ Click derecho en usuario > Ban
+  ☐ Agrega razón: "Usuario de prueba para testing"
+  ☐ Confirma el ban
+
+☐ Verifica en el canal de DATOS (DATA_CHANNEL_ID):
+  ☐ Debería haber un embed nuevo
+  ☐ Con datos del usuario baneado
+  ☐ Si aparece → ✅ REGISTRO DE BANES FUNCIONA
+
+☐ Crea un alt (o usa otro usuario):
+  ☐ Entra al servidor con ese usuario
+  
+☐ Verifica en el canal de ALERTAS (ALERT_CHANNEL_ID):
+  ☐ Si es una cuenta muy nueva → Debería haber alerta
+  ☐ Con detalles del análisis
+  ☐ Si aparece → ✅ ALERTAS FUNCIONALES
+
+☐ Prueba: /view_bans
+  ☐ Debería listar el usuario que banealste
+  ☐ Si aparece → ✅ BÚSQUEDA FUNCIONA
+
+☐ Prueba: /search_user [ID del usuario baneado]
+  ☐ Debería mostrar los detalles
+  ☐ Si funciona → ✅ TODO OPERATIVO
+
+
+📋 FASE 9: VERIFICACIONES FINALES
+═══════════════════════════════════════════════════════════════════════════════
+
+☐ Archivo identity_data.txt existe
+  ☐ Ubicación: C:\...\OxcyShop_Store\identity_data.txt
+
+☐ Archivo contiene los datos del usuario baneado
+  ☐ Abre con Notepad
+  ☐ Debería ver: [BAN] ... [/BAN]
+  ☐ Con los datos correctos
+
+☐ Si todos los tests pasaron:
+  ☐ El sistema está ✅ COMPLETAMENTE FUNCIONAL
+
+
+📋 FASE 10: OPTIMIZACIÓN (OPCIONAL)
+═══════════════════════════════════════════════════════════════════════════════
+
+☐ Personalización:
+  ☐ ¿Quiero cambiar la sensibilidad del Trust Score?
+    → Edita modules/identity_ban/trust_score.py
+  
+  ☐ ¿Quiero agregar más campos al archivo?
+    → Edita identity_manager.py y trust_score.py
+
+☐ Respaldo:
+  ☐ ¿Hago copia de seguridad?
+    → Copia identity_data.txt a otra carpeta
+    → O subirlo a Google Drive
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+SÍNTOMAS DE ÉXITO
+═════════════════════════════════════════════════════════════════════════════
+
+✅ El bot inicia sin errores
+✅ Aparecen los mensajes de módulos cargados
+✅ Los comandos / aparecen en Discord
+✅ /check_trust funciona
+✅ /view_bans funciona
+✅ /search_user funciona
+✅ Cuando alguien es baneado, aparece embed en DATA_CHANNEL
+✅ Cuando un usuario nuevo entra, se analizan
+✅ Si es sospechoso, aparece alerta en ALERT_CHANNEL
+✅ identity_data.txt se crea y actualiza correctamente
+
+
+SÍNTOMAS DE ERROR
+═════════════════════════════════════════════════════════════════════════════
+
+❌ Error al cargar módulos (en consola)
+   → Revisa la ruta de carpetas
+   → Verifica que __init__.py existe en modules/
+
+❌ Comandos no aparecen
+   → Espera 10 min para sincronización
+   → Limpiar caché Discord (Ctrl+R)
+   → Reinicia bot
+
+❌ No se guardan banes
+   → Verifica permisos del bot
+   → Verifica que identity_data.txt existe
+
+❌ No se envían alertas
+   → Verifica IDs de canal en events.py
+   → Verifica permisos del bot en esos canales
+
+❌ Error de parseo
+   → NUNCA edites identity_data.txt manualmente
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+PRÓXIMOS PASOS DESPUÉS DE LA INTEGRACIÓN
+═════════════════════════════════════════════════════════════════════════════
+
+1. Monitorea el archivo identity_data.txt
+   → Se irá llenando con banes
+
+2. Revisa /view_bans regularmente
+   → Para ver historial de banes
+
+3. Usa /check_trust en usuarios sospechosos
+   → Para análisis individual
+
+4. Ajusta thresholds si es necesario
+   → En modules/identity_ban/trust_score.py
+
+5. Respalda identity_data.txt ocasionalmente
+   → Por si acaso
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+¿TODO COMPLETADO? ✅
+
+Si marcaste todos los checks hasta FASE 8:
+→ Tu sistema Ban Trust Score está 100% funcional
+
+Si tienes problemas en alguna fase:
+→ Revisa FAQ_Y_TROUBLESHOOTING.txt
+→ Revisa INTEGRACIÓN_IDENTITY_BAN.md
+
+═══════════════════════════════════════════════════════════════════════════════

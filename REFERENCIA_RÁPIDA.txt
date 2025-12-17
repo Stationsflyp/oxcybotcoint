@@ -1,0 +1,293 @@
+═══════════════════════════════════════════════════════════════════════════════
+⚡ REFERENCIA RÁPIDA - SISTEMA BAN TRUST SCORE
+═══════════════════════════════════════════════════════════════════════════════
+
+
+📦 ARCHIVOS CREADOS
+═════════════════════
+
+modules/identity_ban/
+├── __init__.py                    (Inicializador del módulo)
+├── identity_manager.py            (Lectura/escritura del .txt)
+├── trust_score.py                 (Cálculo de puntuación)
+├── events.py                      (Eventos: on_member_ban, on_member_join)
+└── commands.py                    (Comandos: /check_trust, /view_bans, /search_user)
+
+identity_data.txt                  (Base de datos de texto)
+
+
+🚀 INICIO RÁPIDO
+═════════════════════════════════════════════════════════════════════════════
+
+1. INTEGRACIÓN (1 minuto)
+   ─────────────────────
+   Abre: OxcyShop - Store Management.py
+   
+   Busca: def on_ready()
+   
+   Después de: bot.loop.create_task(change_status())
+   
+   Agrega:
+   ─────────────────────────────────────────────────────────────────
+   try:
+       await bot.load_extension("modules.identity_ban.events")
+       print("✅ Módulo events cargado")
+   except Exception as e:
+       print(f"❌ Error: {e}")
+   
+   try:
+       await bot.load_extension("modules.identity_ban.commands")
+       print("✅ Módulo commands cargado")
+   except Exception as e:
+       print(f"❌ Error: {e}")
+   ─────────────────────────────────────────────────────────────────
+
+
+2. CONFIGURACIÓN (2 minutos)
+   ─────────────────────────
+   Abre: modules/identity_ban/events.py
+   
+   Encuentra las líneas:
+   ALERT_CHANNEL_ID = 1448647845921161267
+   DATA_CHANNEL_ID = 1448647859363905619
+   
+   Reemplaza con tus IDs de canal
+
+
+3. REINICIA (30 segundos)
+   ────────────────────
+   Cierra el bot
+   Abre nuevamente
+   Verifica que dice "✅ Módulo cargado"
+
+
+4. ¡LISTO!
+   ──────
+   El sistema está activo
+
+
+📋 COMANDOS DISPONIBLES
+═════════════════════════════════════════════════════════════════════════════
+
+/check_trust @usuario
+────────────────────
+Verifica el Trust Score de un usuario
+
+Ejemplo: /check_trust @NombreUsuario
+Retorna: Score, detalles, recomendaciones
+
+
+/view_bans
+─────────
+Muestra todos los banes registrados con paginación
+
+Ejemplo: /view_bans
+Retorna: Lista de usuarios baneados (página 1, 2, 3...)
+
+
+/search_user <ID>
+─────────────────
+Busca un usuario específico en los registros
+
+Ejemplo: /search_user 123456789012345678
+Retorna: Información completa del usuario
+
+
+🎯 CÓMO FUNCIONA
+═════════════════════════════════════════════════════════════════════════════
+
+EVENTO 1: on_member_ban (Usuario es baneado)
+──────────────────────────────────────────
+
+Usuario baneado → Bot detecta
+                    ↓
+              Guarda en identity_data.txt:
+              - ID
+              - Nombre#discriminator
+              - Fecha/Hora
+              - Servidor
+              - Razón del ban
+              - Historial
+                    ↓
+              Envía embed al canal DATA_CHANNEL_ID
+                    ↓
+              ✅ Completado
+
+
+EVENTO 2: on_member_join (Usuario se une)
+──────────────────────────────────────────
+
+Usuario se une → Bot analiza
+                    ↓
+              Lee identity_data.txt (todos los banes)
+                    ↓
+              Calcula Trust Score (0-100):
+              - Antigüedad cuenta (0-25)
+              - Similitud nombre (0-20)
+              - Similitud avatar (0-15)
+              - Overlap servidor (0-15)
+              - Patrón ID (0-10)
+                    ↓
+              Si score < 70:
+              ├─ Envía alerta a ALERT_CHANNEL_ID
+              └─ Incluye razones + recomendación
+              
+              Si score >= 70:
+              └─ Usuario entra normalmente (sin alerta)
+                    ↓
+              ✅ Completado
+
+
+📊 TABLA DE PUNTUACIONES
+═════════════════════════════════════════════════════════════════════════════
+
+Score     Color    Recomendación
+─────────────────────────────────
+85-100    🟢      ✅ Sin sospechas
+70-84     🟡      🟡 Monitorear
+50-69     🟠      🟠 Kick recomendado
+0-49      🔴      🔴 Ban recomendado
+
+
+📈 ANTIGÜEDAD DE CUENTA
+═════════════════════════════════════════════════════════════════════════════
+
+Edad            Puntos
+─────────────────────────
+> 2 años          25
+> 1 año           20
+> 6 meses         15
+> 3 meses         10
+> 1 mes           5
+< 1 mes           0
+
+
+🔤 SIMILITUD DE NOMBRE
+═════════════════════════════════════════════════════════════════════════════
+
+Similitud       Puntos    Descripción
+────────────────────────────────────────
+> 85%          5-10      Muy similar (sospechoso)
+70-85%         10-15     Similar (caution)
+50-70%         15-20     Parcialmente similar
+< 50%          20        Poco similar (confiable)
+
+
+💾 ESTRUCTURA DEL ARCHIVO identity_data.txt
+═════════════════════════════════════════════════════════════════════════════
+
+[BAN]
+ID: 123456789012345678
+User: Troll_Name#4521
+Fecha: 2025-12-11 14:32:45
+Servidor: 1433202195221713008
+Historial: Descripción del comportamiento
+Notas: Notas adicionales
+[/BAN]
+
+[BAN]
+ID: 987654321098765432
+User: SpamBot_Alt#0001
+Fecha: 2025-12-10 09:15:30
+Servidor: 1433202195221713008
+Historial: Otro historial
+Notas: Otras notas
+[/BAN]
+
+
+⚙️ CAMBIOS RÁPIDOS
+═════════════════════════════════════════════════════════════════════════════
+
+CAMBIAR SENSIBILIDAD DE NOMBRE:
+────────────────────────────────
+Archivo: modules/identity_ban/trust_score.py
+Línea ~85:
+    if similarity > 0.85:  # Cambiar a 0.70 para más sensibilidad
+        penalty = 20
+
+(Menor número = Más sensible)
+
+
+CAMBIAR CANALES:
+─────────────────
+Archivo: modules/identity_ban/events.py
+Línea 8-9:
+    ALERT_CHANNEL_ID = 1448647845921161267
+    DATA_CHANNEL_ID = 1448647859363905619
+
+
+CAMBIAR THRESHOLDS DE SCORE:
+──────────────────────────────
+Archivo: modules/identity_ban/trust_score.py
+Línea ~224:
+    if total_score < 50:      # < 50 = Ban
+        recommendation = "🔴 BAN RECOMENDADO"
+    elif total_score < 70:    # 50-70 = Kick
+        recommendation = "🟠 KICK RECOMENDADO"
+    elif total_score < 85:    # 70-85 = Monitor
+        recommendation = "🟡 MONITOREAR"
+
+
+🔒 PERMISOS NECESARIOS
+═════════════════════════════════════════════════════════════════════════════
+
+El bot debe tener:
+✅ Ver canales
+✅ Enviar mensajes
+✅ Insertar embeds
+✅ Usar aplicaciones slash
+✅ Leer historial de mensajes
+
+
+🐛 ERRORES COMUNES
+═════════════════════════════════════════════════════════════════════════════
+
+❌ ModuleNotFoundError
+→ Verifica que carpeta modules/identity_ban existe
+
+❌ Commands no aparecen
+→ Reinicia bot, espera a sincronización
+
+❌ No se guardan banes
+→ Verifica permisos del bot
+
+❌ Alertas no se envían
+→ Verifica IDs de canal en events.py
+
+❌ Error de parseo
+→ Nunca edites identity_data.txt manualmente
+
+
+💡 TIPS
+═════════════════════════════════════════════════════════════════════════════
+
+1. Usa /check_trust para verificar usuarios sospechosos manualmente
+
+2. Revisa /view_bans regularmente para monitorer
+
+3. Ajusta thresholds según tus necesidades
+
+4. Respalda identity_data.txt ocasionalmente
+
+5. No edites el archivo manualmente
+
+6. Los comandos usan "/" (slash commands)
+
+7. El sistema es automático, no requiere intervención
+
+8. Funciona entre múltiples servidores
+
+9. Sin dependencias externas, solo Discord.py
+
+
+📞 ARCHIVOS DE AYUDA
+═════════════════════════════════════════════════════════════════════════════
+
+INTEGRACIÓN_IDENTITY_BAN.md       → Guía completa de integración
+FAQ_Y_TROUBLESHOOTING.txt          → Preguntas frecuentes
+EJEMPLOS_DE_SALIDA.txt             → Ejemplos visuales
+CÓDIGO_AGREGAR.py                  → Código exacto a agregar
+REFERENCIA_RÁPIDA.txt              → Este archivo
+
+
+═══════════════════════════════════════════════════════════════════════════════
