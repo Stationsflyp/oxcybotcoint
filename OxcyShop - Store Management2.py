@@ -52,7 +52,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 # --------------------- USUARIOS ---------------------
 OWNER_ID = 998836610516914236  # Owner con acceso total
 
-CANAL_ID = 144908289827904103  # ID del canal de bienvenida
+CANAL_ID = 1449082898279043103  # ID del canal de bienvenida
 BANNER_URL = "https://i.ibb.co/7JZnM4Hd/Gemini-Generated-Image-bosylebosylebosy.png"
 BANNER_URL_OXCY_V2 = "https://i.ibb.co/kVyf2hFr/Screenshot-2025-12-12-122542.png"
 BANNER_URL_ICON_V2 = "https://i.ibb.co/GQFJ0hrr/Fho-W-qg-BS96-Z4j1-Wuar-OQA.webp"
@@ -63,8 +63,16 @@ PREMIUM_UI_CHANNEL_ID = 1450555415673962678  # Canal donde se publican las Premi
 LEADERBOARD_CHANNEL_ID = 1450555229719498946
 
 # --------------------- VARIABLES ---------------------
-coin_cooldowns = {}     # user_id -> datetime (for chat currency)
+message_history = {}    # user_id -> {"last_message": str, "last_time": datetime, "same_count": int, "spam_warn": int}
 voice_join_times = {}   # user_id -> datetime (for voice currency)
+spam_penalty = 5        # Monedas a quitar por spam
+
+def similarity_ratio(a, b):
+    a, b = a.lower().strip(), b.lower().strip()
+    if a == b:
+        return 1.0
+    matches = sum(1 for i, char in enumerate(a) if i < len(b) and char == b[i])
+    return matches / max(len(a), len(b)) if max(len(a), len(b)) > 0 else 0
 
 
 
@@ -547,20 +555,46 @@ async def on_message(message):
     current_time = discord.utils.utcnow()
 
     # --- CURRENCY SYSTEM (CHAT) ---
-    if not message.author.bot:
-        last_coin_time = coin_cooldowns.get(user_id)
-        if not last_coin_time or (current_time - last_coin_time).total_seconds() > 60:
-            chance_to_earn = random.random()
-            if chance_to_earn < 0.7:
-                rand = random.random()
-                if rand < 0.4:
-                    coins_earned = random.randint(1, 2)
-                elif rand < 0.75:
-                    coins_earned = random.randint(3, 5)
-                else:
-                    coins_earned = random.randint(6, 9)
-                database.add_coins(user_id, coins_earned)
-            coin_cooldowns[user_id] = current_time
+    if not message.author.bot and message.content.strip():
+        if user_id not in message_history:
+            message_history[user_id] = {"last_message": "", "last_time": current_time, "same_count": 0, "spam_warn": 0}
+        
+        history = message_history[user_id]
+        time_diff = (current_time - history["last_time"]).total_seconds()
+        
+        similarity = similarity_ratio(message.content, history["last_message"])
+        
+        if time_diff > 10:
+            history["same_count"] = 0
+        
+        if similarity >= 0.85 and time_diff < 5:
+            history["same_count"] += 1
+            
+            if history["same_count"] >= 3:
+                history["spam_warn"] += 1
+                current_coins = database.get_coins(user_id)
+                coins_to_remove = min(spam_penalty, current_coins)
+                database.remove_coins(user_id, coins_to_remove)
+                
+                embed = discord.Embed(
+                    title="⚠️ Spam Detected | Spam Detectado",
+                    description=f"{message.author.mention} Stop spamming! You've been penalized. | ¡Deja de spamear! Has sido penalizado.",
+                    color=0xFF0000
+                )
+                embed.add_field(name="❌ Coins Removed | Monedas Removidas", value=f"`{coins_to_remove}` coins", inline=True)
+                embed.add_field(name="💰 New Balance | Nuevo Balance", value=f"`{database.get_coins(user_id)}` coins", inline=True)
+                embed.add_field(name="⚠️ Spam Warnings | Advertencias de Spam", value=f"`{history['spam_warn']}`", inline=True)
+                embed.set_footer(text="OxcyShop • No spam allowed | No se permite spam")
+                embed.timestamp = discord.utils.utcnow()
+                
+                await message.channel.send(embed=embed)
+                
+                history["same_count"] = 0
+        else:
+            history["same_count"] = 0
+        
+        history["last_message"] = message.content
+        history["last_time"] = current_time
 
     # --- REACCIONES AUTOMÁTICAS A USUARIOS ESPECÍFICOS ---
     if user_id in REACT_USERS or user_id in reaction_users:
@@ -617,16 +651,18 @@ async def shop(interaction: discord.Interaction, price: int, image: discord.Atta
 @bot.tree.command(name="monedas", description="Send coins to another user | Envía monedas a otro usuario")
 @discord.app_commands.describe(usuario="User receiving coins | Usuario que recibe las monedas", cantidad="Amount of coins | Cantidad de monedas")
 async def monedas(interaction: discord.Interaction, usuario: discord.User, cantidad: int):
+    await interaction.response.defer(ephemeral=True)
+    
     if interaction.user.id != OWNER_ID:
-        await interaction.response.send_message("❌ Only the owner can use this command. | Solo el owner puede usar este comando.", ephemeral=True)
+        await interaction.followup.send("❌ Only the owner can use this command. | Solo el owner puede usar este comando.", ephemeral=True)
         return
     
     if cantidad <= 0:
-        await interaction.response.send_message("❌ The amount must be greater than 0. | La cantidad debe ser mayor a 0.", ephemeral=True)
+        await interaction.followup.send("❌ The amount must be greater than 0. | La cantidad debe ser mayor a 0.", ephemeral=True)
         return
     
     if usuario.bot:
-        await interaction.response.send_message("❌ You cannot give coins to bots. | No puedes dar monedas a bots.", ephemeral=True)
+        await interaction.followup.send("❌ You cannot give coins to bots. | No puedes dar monedas a bots.", ephemeral=True)
         return
     
     database.add_coins(usuario.id, cantidad)
@@ -640,6 +676,6 @@ async def monedas(interaction: discord.Interaction, usuario: discord.User, canti
     embed.set_footer(text="OxcyShop • Coin System | Sistema de Monedas")
     embed.timestamp = discord.utils.utcnow()
     
-    await interaction.response.send_message(embed=embed)
+    await interaction.followup.send(embed=embed)
 
 bot.run(TOKEN)
